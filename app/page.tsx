@@ -19,7 +19,7 @@ export default function Home() {
       <section className="grid items-center gap-8 md:grid-cols-2">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-gold-dark">
-            Sunrise Ward
+            Waianae Ward · Makakilo Stake
           </p>
           <h1 className="mt-2 font-heading text-4xl font-bold text-navy">
             Sacrament Meeting Planner
@@ -45,7 +45,7 @@ export default function Home() {
         </div>
         <Image
           src="/hero.svg"
-          alt="Illustration of a chapel with a steeple at sunrise"
+          alt="Illustration of a chapel on the Waianae coast with sunshine, mountains, ocean, palm trees with coconuts, a grass hut, hibiscus, and a plumeria lei"
           width={600}
           height={400}
           className="h-auto w-full rounded-xl shadow-sm"

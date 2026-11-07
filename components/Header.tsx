@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import NavLinks from './NavLinks';
 
-const WARD_NAME = 'Sunrise Ward';
+const WARD_NAME = 'Waianae Ward';
 
 export default function Header() {
   const today = new Date().toLocaleDateString('en-US', {

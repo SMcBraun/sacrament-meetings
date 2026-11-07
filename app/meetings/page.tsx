@@ -16,7 +16,7 @@ import { getBaseUrl } from '@/lib/base-url';
 import type { SacramentMeeting } from '@/lib/types';
 
 export const metadata: Metadata = {
-  title: 'All Meetings | Sunrise Ward',
+  title: 'All Meetings | Waianae Ward',
 };
 
 export default async function MeetingsPage() {

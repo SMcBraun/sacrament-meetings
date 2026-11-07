@@ -22,7 +22,7 @@ const inter = Inter({ variable: '--font-inter', subsets: ['latin'] });
 const lora = Lora({ variable: '--font-lora', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Sacrament Meeting Planner | Sunrise Ward',
+  title: 'Sacrament Meeting Planner | Waianae Ward',
   description: 'Plan, view, and print sacrament meeting programs.',
 };
 
