@@ -1,26 +1,35 @@
+/* ==========================================================
+ * app/globals.css — Site-wide styling tokens
+ * ----------------------------------------------------------
+ * PLAIN ENGLISH: Turns on Tailwind and sets the app's shared
+ *   colors and fonts.
+ * LOGIC: @theme creates Tailwind classes from these variables:
+ *   --color-navy → bg-navy, text-navy, border-navy, and so on.
+ * WHY WE NEED IT: The assignment asks for shared styling tokens
+ *   in globals.css. Change a color here and the whole app updates.
+ * LEARNING GAP: gold is for decoration only; gold-dark is dark
+ *   enough for text to pass color-contrast checks.
+ * ========================================================== */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-navy: #1f3b5c;
+  --color-cream: #faf7f0;
+  --color-gold: #c9a227;
+  --color-gold-dark: #7a5c0f;
+  --font-heading: var(--font-lora);
+  --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #faf7f0;
+  color: #1f2937;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+/* When printing, use a plain white page. */
+@media print {
+  body {
+    background: #ffffff;
+  }
 }
