@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd3f4"/>
+      <stop offset="1" stop-color="#ffe2b0"/>
+    </linearGradient>
+    <g id="plumeria">
+      <ellipse cx="0" cy="-13" rx="9" ry="15"/>
+      <ellipse cx="0" cy="-13" rx="9" ry="15" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-13" rx="9" ry="15" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-13" rx="9" ry="15" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-13" rx="9" ry="15" transform="rotate(288)"/>
+      <circle cx="0" cy="0" r="5" fill="#ffb300" stroke="none"/>
+    </g>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="600" height="400" fill="url(#sky)"/>
+
+  <!-- Sunshine with rays -->
+  <g stroke="#ffc83d" stroke-width="5" stroke-linecap="round">
+    <line x1="95" y1="15" x2="95" y2="0"/>
+    <line x1="95" y1="135" x2="95" y2="150"/>
+    <line x1="35" y1="75" x2="20" y2="75"/>
+    <line x1="155" y1="75" x2="170" y2="75"/>
+    <line x1="53" y1="33" x2="42" y2="22"/>
+    <line x1="137" y1="117" x2="148" y2="128"/>
+    <line x1="137" y1="33" x2="148" y2="22"/>
+    <line x1="53" y1="117" x2="42" y2="128"/>
+  </g>
+  <circle cx="95" cy="75" r="40" fill="#ffd23f"/>
+
+  <!-- Waianae mountains -->
+  <path d="M0 235 L90 130 L160 195 L240 110 L330 205 L420 145 L520 215 L600 175 L600 262 L0 262 Z" fill="#4f7f52"/>
+
+  <!-- Ocean -->
+  <rect y="255" width="600" height="65" fill="#1f8fc4"/>
+  <path d="M0 272 q25 -10 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.75"/>
+  <path d="M0 296 q25 -10 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.55"/>
+
+  <!-- Sand -->
+  <path d="M0 312 Q300 292 600 312 L600 400 L0 400 Z" fill="#f4dca8"/>
+  <g fill="#e6c78a">
+    <circle cx="60" cy="385" r="2"/><circle cx="200" cy="330" r="2"/><circle cx="420" cy="390" r="2"/>
+    <circle cx="520" cy="345" r="2"/><circle cx="380" cy="330" r="2"/>
+  </g>
+
+  <!-- Chapel -->
+  <rect x="235" y="250" width="130" height="80" fill="#ffffff" stroke="#1f3b5c" stroke-width="3"/>
+  <polygon points="228,254 300,212 372,254" fill="#1f3b5c"/>
+  <rect x="285" y="175" width="30" height="40" fill="#ffffff" stroke="#1f3b5c" stroke-width="3"/>
+  <polygon points="280,178 300,135 320,178" fill="#1f3b5c"/>
+  <path d="M290 330 V300 a10 10 0 0 1 20 0 V330 Z" fill="#7a5c0f"/>
+  <rect x="250" y="275" width="20" height="28" rx="10" fill="#bcd4e6" stroke="#1f3b5c" stroke-width="2"/>
+  <rect x="330" y="275" width="20" height="28" rx="10" fill="#bcd4e6" stroke="#1f3b5c" stroke-width="2"/>
+
+  <!-- Grass hut (hale) -->
+  <rect x="410" y="290" width="90" height="42" fill="#a0703a" stroke="#5b3a1e" stroke-width="2"/>
+  <rect x="446" y="305" width="18" height="27" fill="#5b3a1e"/>
+  <polygon points="392,296 455,250 518,296" fill="#d9a441" stroke="#8a6a1f" stroke-width="2"/>
+  <g stroke="#8a6a1f" stroke-width="2">
+    <line x1="455" y1="252" x2="410" y2="294"/>
+    <line x1="455" y1="252" x2="432" y2="295"/>
+    <line x1="455" y1="252" x2="455" y2="296"/>
+    <line x1="455" y1="252" x2="478" y2="295"/>
+    <line x1="455" y1="252" x2="500" y2="294"/>
+  </g>
+
+  <!-- Left palm tree with coconuts -->
+  <path d="M95 385 Q100 305 120 230" fill="none" stroke="#7a5230" stroke-width="10" stroke-linecap="round"/>
+  <path d="M120 230 Q80 210 55 230 Q85 215 120 230 Q90 190 70 180 Q105 195 120 230 Q125 190 150 175 Q135 200 120 230 Q160 205 185 220 Q155 215 120 230" fill="#2f6b3a" stroke="#2f6b3a" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="#5b3a1e">
+    <circle cx="113" cy="239" r="6"/><circle cx="125" cy="241" r="6"/><circle cx="119" cy="248" r="6"/>
+  </g>
+
+  <!-- Right palm tree with coconuts -->
+  <path d="M565 390 Q560 320 540 255" fill="none" stroke="#7a5230" stroke-width="9" stroke-linecap="round"/>
+  <path d="M540 255 Q510 235 485 250 Q515 240 540 255 Q520 217 502 207 Q532 223 540 255 Q550 217 575 205 Q558 230 540 255 Q575 233 600 245 Q570 243 540 255" fill="#2f6b3a" stroke="#2f6b3a" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="#5b3a1e">
+    <circle cx="534" cy="263" r="5.5"/><circle cx="546" cy="265" r="5.5"/><circle cx="540" cy="272" r="5.5"/>
+  </g>
+
+  <!-- Red hibiscus, front left -->
+  <g transform="translate(40 355)">
+    <g fill="#e0245e" stroke="#9c0f3f" stroke-width="2">
+      <ellipse cx="0" cy="-22" rx="17" ry="24"/>
+      <ellipse cx="0" cy="-22" rx="17" ry="24" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-22" rx="17" ry="24" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-22" rx="17" ry="24" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-22" rx="17" ry="24" transform="rotate(288)"/>
+    </g>
+    <circle cx="0" cy="0" r="9" fill="#9c0f3f"/>
+    <path d="M0 0 L19 -28" stroke="#ffcf5c" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="21" cy="-31" r="5" fill="#ffcf5c"/>
+  </g>
+
+  <!-- THE PLUMERIA LEI (front and center) -->
+  <g transform="translate(300 362)">
+    <ellipse cx="0" cy="0" rx="155" ry="28" fill="none" stroke="#2e7d32" stroke-width="5"/>
+    <g stroke="#b0164f" stroke-width="1.5">
+      <!-- back row -->
+      <use href="#plumeria" x="-147" y="-9" fill="#ff8fb3"/>
+      <use href="#plumeria" x="-125" y="-16" fill="#fff4c2"/>
+      <use href="#plumeria" x="-91" y="-23" fill="#ffffff"/>
+      <use href="#plumeria" x="-48" y="-27" fill="#ff5c93"/>
+      <use href="#plumeria" x="0" y="-28" fill="#ff8fb3"/>
+      <use href="#plumeria" x="48" y="-27" fill="#fff4c2"/>
+      <use href="#plumeria" x="91" y="-23" fill="#ffffff"/>
+      <use href="#plumeria" x="125" y="-16" fill="#ff5c93"/>
+      <use href="#plumeria" x="147" y="-9" fill="#ff8fb3"/>
+      <!-- sides -->
+      <use href="#plumeria" x="155" y="0" fill="#fff4c2"/>
+      <use href="#plumeria" x="-155" y="0" fill="#ffffff"/>
+      <!-- front row -->
+      <use href="#plumeria" x="147" y="9" fill="#ffffff"/>
+      <use href="#plumeria" x="125" y="16" fill="#ff8fb3"/>
+      <use href="#plumeria" x="91" y="23" fill="#fff4c2"/>
+      <use href="#plumeria" x="48" y="27" fill="#ff5c93"/>
+      <use href="#plumeria" x="0" y="28" fill="#ffffff"/>
+      <use href="#plumeria" x="-48" y="27" fill="#ff8fb3"/>
+      <use href="#plumeria" x="-91" y="23" fill="#fff4c2"/>
+      <use href="#plumeria" x="-125" y="16" fill="#ff5c93"/>
+      <use href="#plumeria" x="-147" y="9" fill="#ffffff"/>
+    </g>
+  </g>
+</svg>
