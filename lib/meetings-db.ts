@@ -1,198 +1,218 @@
 /* ==========================================================
- * lib/meetings-db.ts — Temporary in-memory meeting data
+ * lib/meetings-db.ts — Meeting data from the Neon database
  * ----------------------------------------------------------
- * PLAIN ENGLISH: A list of sample Sunday programs, plus two
- *   helper functions to look them up.
- * LOGIC: The data is a plain array (list) that lives in memory.
- *   The functions filter or search that list.
- * WHY WE NEED IT: The API routes need data to send. A real
- *   database comes in later weeks; this is a stand-in for now.
- * LEARNING GAP: "In-memory" means the data resets when the
- *   server restarts. That's fine this week. Same idea as my
- *   CSE 341 Books API model, but without MongoDB.
+ * PLAIN ENGLISH: The functions that ask the database for
+ *   sacrament meeting programs.
+ * LOGIC: Each function sends a SQL query to Neon (Postgres)
+ *   and returns the rows in the SacramentMeeting shape.
+ * WHY WE NEED IT: Week 02 kept meetings in a list inside the
+ *   code, which reset when the server restarted. Now the data
+ *   lives in a real database, so it stays saved.
+ * LEARNING GAP: Every function is now "async" (it waits for the
+ *   database), so every file that calls them must use "await".
+ *   Same idea as my CSE 340 Postgres models, but with Neon.
+ * WHERE THE DATA COMES FROM: The "meetings" table I created
+ *   and filled in the Vercel Query tab (10 Waianae Ward
+ *   meetings). DATABASE_URL in .env.local tells the code where
+ *   that database is.
  * ========================================================== */
 
 /* ----------------------------------------------------------
- * Import the SacramentMeeting type
- * PLAIN ENGLISH: Bring in the "form" from types.ts.
- * LOGIC: "import type" brings in only the shape, not code.
- * WHY WE NEED IT: TypeScript checks that every meeting below
- *   has every required field.
- * LEARNING GAP: './types' means "types.ts in this same folder."
+ * Imports
+ * PLAIN ENGLISH: Bring in the Neon "phone line" and the
+ *   SacramentMeeting form from types.ts.
+ * LOGIC: neon() creates a connection; "import type" brings in
+ *   only the shape, not code.
+ * WHY WE NEED IT: neon lets us run SQL; the type lets
+ *   TypeScript check the data we return.
+ * LEARNING GAP: '@neondatabase/serverless' is the package I
+ *   installed with npm install.
  * ---------------------------------------------------------- */
+import { neon } from '@neondatabase/serverless';
 import type { SacramentMeeting } from './types';
 
 /* ----------------------------------------------------------
- * meetings — the sample data
- * PLAIN ENGLISH: 7 Sundays of programs.
- * LOGIC: An array of SacramentMeeting objects. Each needs a
- *   unique id.
- * WHY WE NEED IT: The assignment requires at least 5 records.
- *   May 3 matches the assignment's test URL, and Oct 25 through
- *   Nov 22 covers "this Sunday" whenever the app is checked.
- * LEARNING GAP: Stake and general conference are not sacrament
- *   meetings, but the type still requires every field, so they
- *   have simple placeholder values.
+ * sql — the database connection
+ * PLAIN ENGLISH: Dial the database using its address.
+ * LOGIC: process.env.DATABASE_URL reads the secret address
+ *   from .env.local (on my laptop) or from Vercel (online).
+ * WHY WE NEED IT: Every query below uses sql`...`.
+ * LEARNING GAP: The "!" tells TypeScript "trust me, this value
+ *   exists." If DATABASE_URL is missing, the app can't connect.
  * ---------------------------------------------------------- */
-const meetings: SacramentMeeting[] = [
-  {
-    id: 1,
-    date: '2026-05-03',
-    meetingType: 'regular',
-    presiding: 'Bishop Smith',
-    conducting: 'Brother Jones',
-    announcements: ['Ward temple night: May 10'],
-    openingHymn: { number: 2, title: 'The Spirit of God' },
-    openingPrayer: 'Sister Williams',
-    wardBusiness: [{ description: 'Sustaining of new Primary president' }],
-    stakeBusiness: false,
-    sacramentHymn: { number: 169, title: 'As Now We Take the Sacrament' },
-    speakers: [
-      { name: 'Sister Brown', topic: 'Faith in Jesus Christ', type: 'speaker' },
-      { name: 'Youth Choir', topic: '', type: 'musical-number' },
-      { name: 'Brother Lee', topic: 'The Power of Prayer', type: 'speaker' },
-    ],
-    closingHymn: { number: 31, title: 'O God, Our Help in Ages Past' },
-    closingPrayer: 'Brother Davis',
-  },
-  {
-    id: 2,
-    date: '2026-10-04',
-    meetingType: 'general',
-    presiding: 'First Presidency',
-    conducting: 'General Conference Broadcast',
-    announcements: ['General Conference: watch at home or at the stake center'],
-    openingHymn: { number: 19, title: 'We Thank Thee, O God, for a Prophet' },
-    openingPrayer: 'As assigned',
-    wardBusiness: [],
-    stakeBusiness: false,
-    sacramentHymn: { number: 0, title: 'No sacrament (General Conference)' },
-    speakers: [],
-    closingHymn: { number: 152, title: 'God Be with You Till We Meet Again' },
-    closingPrayer: 'As assigned',
-  },
-  {
-    id: 3,
-    date: '2026-10-25',
-    meetingType: 'regular',
-    presiding: 'Bishop Smith',
-    conducting: 'Brother Tanaka',
-    announcements: ['Ward Halloween party: Oct 30 at 6 pm', 'Youth service project: Nov 7'],
-    openingHymn: { number: 85, title: 'How Firm a Foundation' },
-    openingPrayer: 'Sister Kealoha',
-    wardBusiness: [
-      { description: 'Release of Sister Park as Relief Society secretary' },
-      { description: 'Sustaining of Sister Cruz as Relief Society secretary' },
-    ],
-    stakeBusiness: true,
-    sacramentHymn: { number: 193, title: 'I Stand All Amazed' },
-    speakers: [
-      { name: 'Brother Cruz', topic: 'Serving Others', type: 'speaker' },
-      { name: 'Sister Nakamura', topic: '', type: 'musical-number' },
-      { name: 'Sister Fonoti', topic: 'Following the Prophet', type: 'speaker' },
-    ],
-    closingHymn: { number: 98, title: 'I Need Thee Every Hour' },
-    closingPrayer: 'Brother Silva',
-  },
-  {
-    id: 4,
-    date: '2026-11-01',
-    meetingType: 'testimony',
-    presiding: 'Bishop Smith',
-    conducting: 'Brother Jones',
-    announcements: ['Fast offerings may be given online or to a member of the bishopric'],
-    openingHymn: { number: 136, title: 'I Know That My Redeemer Lives' },
-    openingPrayer: 'Brother Wong',
-    wardBusiness: [{ description: 'Baby blessing: Kai Mahoe' }],
-    stakeBusiness: false,
-    sacramentHymn: { number: 171, title: 'With Humble Heart' },
-    speakers: [],
-    closingHymn: { number: 166, title: 'Abide with Me!' },
-    closingPrayer: 'Sister Alapai',
-  },
-  {
-    id: 5,
-    date: '2026-11-08',
-    meetingType: 'regular',
-    presiding: 'Bishop Smith',
-    conducting: 'Brother Tanaka',
-    announcements: ['Ward Thanksgiving dinner: Nov 21 at 5 pm'],
-    openingHymn: { number: 72, title: 'Praise to the Lord, the Almighty' },
-    openingPrayer: 'Sister Kahale',
-    wardBusiness: [],
-    stakeBusiness: false,
-    sacramentHymn: { number: 146, title: 'Gently Raise the Sacred Strain' },
-    speakers: [
-      { name: 'Sister Aquino', topic: 'Gratitude', type: 'speaker' },
-      { name: 'Primary Children', topic: '', type: 'musical-number' },
-      { name: 'Brother Kahale', topic: 'Ministering Like the Savior', type: 'speaker' },
-    ],
-    closingHymn: { number: 116, title: 'Come, Follow Me' },
-    closingPrayer: 'Brother Reyes',
-  },
-  {
-    id: 6,
-    date: '2026-11-15',
-    meetingType: 'stake',
-    presiding: 'President Kaleo',
-    conducting: 'President Kaleo',
-    announcements: ['Stake conference at the stake center at 10 am. No ward meetings today.'],
-    openingHymn: { number: 30, title: 'Come, Come, Ye Saints' },
-    openingPrayer: 'As assigned',
-    wardBusiness: [],
-    stakeBusiness: true,
-    sacramentHymn: { number: 0, title: 'No sacrament (stake conference)' },
-    speakers: [],
-    closingHymn: { number: 3, title: 'Now Let Us Rejoice' },
-    closingPrayer: 'As assigned',
-  },
-  {
-    id: 7,
-    date: '2026-11-22',
-    meetingType: 'regular',
-    presiding: 'Bishop Smith',
-    conducting: 'Brother Jones',
-    announcements: ['Christmas program practice: Dec 6 after church'],
-    openingHymn: { number: 6, title: 'Redeemer of Israel' },
-    openingPrayer: 'Sister Nakamura',
-    wardBusiness: [{ description: 'Sustaining of Brother Silva as Sunday School teacher' }],
-    stakeBusiness: false,
-    sacramentHymn: { number: 172, title: 'In Humility, Our Savior' },
-    speakers: [
-      { name: 'Brother Wong', topic: 'Thanksgiving and Gratitude', type: 'speaker' },
-      { name: 'Sister Cruz', topic: 'Living with Joy', type: 'speaker' },
-    ],
-    closingHymn: { number: 301, title: 'I Am a Child of God' },
-    closingPrayer: 'Sister Aquino',
-  },
-];
+const sql = neon(process.env.DATABASE_URL!);
 
 /* ----------------------------------------------------------
- * getMeetings — get all meetings, or one date
- * PLAIN ENGLISH: "Give me every meeting," or "give me the
- *   meeting on this date."
- * LOGIC: If a date is given, filter() keeps only matches.
- *   Otherwise return the whole list.
- * WHY WE NEED IT: Used by GET /api/meetings and the
- *   ?date= search.
- * LEARNING GAP: date?: string | null means the date is
- *   optional AND can be null (what the URL gives when there's
- *   no ?date=). Always returns an array, even if empty.
+ * ITEMS_PER_PAGE — how many meetings per page
+ * PLAIN ENGLISH: Show 5 meetings at a time.
+ * LOGIC: Used for LIMIT (how many) and OFFSET (how many to skip).
+ * WHY WE NEED IT: Pagination. 10 meetings = 2 pages.
+ * LEARNING GAP: Page 1 skips 0, page 2 skips 5, page 3 skips 10.
  * ---------------------------------------------------------- */
-export function getMeetings(date?: string | null): SacramentMeeting[] {
-  if (date) return meetings.filter((m) => m.date === date);
-  return meetings;
+const ITEMS_PER_PAGE = 5;
+
+/* ----------------------------------------------------------
+ * getMeetings — search + one page of meetings
+ * PLAIN ENGLISH: "Give me page 2 of meetings that mention
+ *   'smith'." No search word = all meetings.
+ * LOGIC: ILIKE is a case-insensitive "contains" search. The %
+ *   signs mean "anything before or after." ORDER BY date DESC
+ *   puts the newest first. LIMIT/OFFSET picks the page.
+ * WHY WE NEED IT: The /meetings page search box and the
+ *   GET /api/meetings route.
+ * LEARNING GAP: "AS "meetingType"" renames database columns
+ *   (snake_case) to match my TypeScript names (camelCase).
+ *   ${searchTerm} is safely filled in by neon, which stops SQL
+ *   injection. Never glue user text into SQL with + signs.
+ * ---------------------------------------------------------- */
+export async function getMeetings(
+  query: string = '',
+  currentPage: number = 1
+): Promise<SacramentMeeting[]> {
+  const searchTerm = `%${query}%`;
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const rows = await sql`
+    SELECT
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type                AS "meetingType",
+      presiding, conducting, announcements,
+      opening_hymn                AS "openingHymn",
+      opening_prayer              AS "openingPrayer",
+      ward_business               AS "wardBusiness",
+      stake_business              AS "stakeBusiness",
+      sacrament_hymn              AS "sacramentHymn",
+      speakers,
+      closing_hymn                AS "closingHymn",
+      closing_prayer              AS "closingPrayer"
+    FROM meetings
+    WHERE
+      presiding     ILIKE ${searchTerm}
+      OR conducting ILIKE ${searchTerm}
+      OR meeting_type ILIKE ${searchTerm}
+      OR speakers::text ILIKE ${searchTerm}
+    ORDER BY date DESC
+    LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+  `;
+  return rows as unknown as SacramentMeeting[];
 }
 
 /* ----------------------------------------------------------
- * getMeetingById — get one meeting by its id
- * PLAIN ENGLISH: "Give me meeting number 3."
- * LOGIC: find() returns the first match. If nothing matches,
- *   ?? null returns null instead of undefined.
- * WHY WE NEED IT: Used by GET /api/meetings/[id].
- * LEARNING GAP: Returning null lets the API route send a 404
- *   (not found), just like my CSE 341 getBookById.
+ * getMeetingsTotalPages — how many pages for a search
+ * PLAIN ENGLISH: "How many pages of results are there?"
+ * LOGIC: COUNT(*) counts matching rows, then divide by 5 and
+ *   round UP with Math.ceil (6 meetings = 2 pages, not 1.2).
+ * WHY WE NEED IT: The Pagination component needs to know when
+ *   to hide the "Next" link.
+ * LEARNING GAP: Uses the SAME WHERE as getMeetings, so the page
+ *   count always matches the search results.
  * ---------------------------------------------------------- */
-export function getMeetingById(id: number): SacramentMeeting | null {
-  return meetings.find((m) => m.id === id) ?? null;
+export async function getMeetingsTotalPages(
+  query: string = ''
+): Promise<number> {
+  const searchTerm = `%${query}%`;
+  const rows = await sql`
+    SELECT COUNT(*) FROM meetings
+    WHERE
+      presiding     ILIKE ${searchTerm}
+      OR conducting ILIKE ${searchTerm}
+      OR meeting_type ILIKE ${searchTerm}
+      OR speakers::text ILIKE ${searchTerm}
+  `;
+  return Math.ceil(Number(rows[0].count) / ITEMS_PER_PAGE);
+}
+
+/* ----------------------------------------------------------
+ * getMeetingsByDate — meetings on one exact date
+ * PLAIN ENGLISH: "Give me the meeting on 2026-03-01."
+ * LOGIC: to_char turns the date into 'YYYY-MM-DD' text, then
+ *   compares it to the date from the URL.
+ * WHY WE NEED IT: Keeps GET /api/meetings?date=... working.
+ *   The new getMeetings searches words, not exact dates.
+ * LEARNING GAP: Comparing as text means a bad date like
+ *   ?date=abc just returns [] (empty) instead of crashing.
+ *   This is my own addition, not in the assignment's example.
+ * ---------------------------------------------------------- */
+export async function getMeetingsByDate(
+  date: string
+): Promise<SacramentMeeting[]> {
+  const rows = await sql`
+    SELECT
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type                AS "meetingType",
+      presiding, conducting, announcements,
+      opening_hymn                AS "openingHymn",
+      opening_prayer              AS "openingPrayer",
+      ward_business               AS "wardBusiness",
+      stake_business              AS "stakeBusiness",
+      sacrament_hymn              AS "sacramentHymn",
+      speakers,
+      closing_hymn                AS "closingHymn",
+      closing_prayer              AS "closingPrayer"
+    FROM meetings
+    WHERE to_char(date, 'YYYY-MM-DD') = ${date}
+  `;
+  return rows as unknown as SacramentMeeting[];
+}
+
+/* ----------------------------------------------------------
+ * getMeetingById — one meeting by its id
+ * PLAIN ENGLISH: "Give me meeting number 3."
+ * LOGIC: WHERE id = ${id} finds one row. rows[0] is the first
+ *   (and only) match. ?? null returns null if nothing matched.
+ * WHY WE NEED IT: GET /api/meetings/[id] and the detail page.
+ * LEARNING GAP: Returning null lets the API route send a 404,
+ *   just like before. Same name and input as Week 02, so the
+ *   route only needs "await" added.
+ * ---------------------------------------------------------- */
+export async function getMeetingById(
+  id: number
+): Promise<SacramentMeeting | null> {
+  const rows = await sql`
+    SELECT
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type                AS "meetingType",
+      presiding, conducting, announcements,
+      opening_hymn                AS "openingHymn",
+      opening_prayer              AS "openingPrayer",
+      ward_business               AS "wardBusiness",
+      stake_business              AS "stakeBusiness",
+      sacrament_hymn              AS "sacramentHymn",
+      speakers,
+      closing_hymn                AS "closingHymn",
+      closing_prayer              AS "closingPrayer"
+    FROM meetings WHERE id = ${id}
+  `;
+  return (rows[0] as unknown as SacramentMeeting) ?? null;
+}
+
+/* ----------------------------------------------------------
+ * Mutation stubs — add, update, delete (Week 04)
+ * PLAIN ENGLISH: Placeholders for creating, editing, and
+ *   deleting meetings. They don't work yet on purpose.
+ * LOGIC: Each one throws an error that says "coming in Week 04."
+ * WHY WE NEED IT: The assignment says to keep these names and
+ *   inputs now, so the Week 04 forms can plug right in.
+ * LEARNING GAP: Omit<SacramentMeeting, 'id'> means "a meeting
+ *   without an id" (the database makes the id). Partial<> means
+ *   "only some fields," since an edit may change just one thing.
+ * ---------------------------------------------------------- */
+export async function addMeeting(
+  data: Omit<SacramentMeeting, 'id'>
+): Promise<SacramentMeeting> {
+  throw new Error('addMeeting: database implementation coming in Week 04');
+}
+
+export async function updateMeeting(
+  id: number,
+  updates: Partial<SacramentMeeting>
+): Promise<SacramentMeeting | null> {
+  throw new Error('updateMeeting: database implementation coming in Week 04');
+}
+
+export async function deleteMeeting(id: number): Promise<boolean> {
+  throw new Error('deleteMeeting: database implementation coming in Week 04');
 }
