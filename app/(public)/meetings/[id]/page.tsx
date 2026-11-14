@@ -1,21 +1,27 @@
 /* ==========================================================
- * app/meetings/[id]/page.tsx — One meeting (URL: /meetings/1)
+ * app/(public)/meetings/[id]/page.tsx — One meeting (URL: /meetings/1)
  * ----------------------------------------------------------
  * PLAIN ENGLISH: Shows the full program for one Sunday, with a
  *   Print button.
- * LOGIC: Read the id → fetch /api/meetings/[id] → if 400 or 404,
- *   show the "not found" page → otherwise show MeetingDetail.
- * WHY WE NEED IT: The assignment requires this page to fetch
- *   from the API and render MeetingDetail, plus print mode.
- * LEARNING GAP: params is a Promise in this Next.js version, so
- *   it's awaited. notFound() shows Next.js's built-in 404 page.
+ * LOGIC: Read the id → check it's a valid number → ask the
+ *   database for that meeting → if none, show "not found" →
+ *   otherwise show MeetingDetail.
+ * WHY WE NEED IT: The detail page for each meeting card.
+ * LEARNING GAP: Before, this page fetched its OWN API over the
+ *   internet, and that round trip failed on Vercel. Now it calls
+ *   getMeetingById() directly, the same way the list page does.
+ *   params is a Promise, so it's awaited. notFound() shows the
+ *   built-in 404 page.
+ * WHERE THE DATA COMES FROM: The Neon "meetings" table, through
+ *   getMeetingById() in lib/meetings-db.ts.
  * ========================================================== */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import MeetingDetail from '@/components/MeetingDetail';
 import PrintButton from '@/components/PrintButton';
-import { getBaseUrl } from '@/lib/base-url';
-import type { SacramentMeeting } from '@/lib/types';
+import { getMeetingById } from '@/lib/meetings-db';
+
+const MAX_DB_ID = 2147483647;
 
 export default async function MeetingPage({
   params,
@@ -23,20 +29,17 @@ export default async function MeetingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const baseUrl = await getBaseUrl();
-  const response = await fetch(`${baseUrl}/api/meetings/${encodeURIComponent(id)}`, {
-    cache: 'no-store',
-  });
+  const meetingId = Number(id);
 
-  if (response.status === 400 || response.status === 404) {
+  if (!Number.isInteger(meetingId) || meetingId < 1 || meetingId > MAX_DB_ID) {
     notFound();
   }
 
-  if (!response.ok) {
-    throw new Error('Could not load this meeting.');
-  }
+  const meeting = await getMeetingById(meetingId);
 
-  const meeting: SacramentMeeting = await response.json();
+  if (!meeting) {
+    notFound();
+  }
 
   return (
     <>
