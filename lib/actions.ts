@@ -152,8 +152,9 @@ const hymnNumber = z
   .string()
   .trim()
   .min(1, { message: 'Enter a hymn number (use 0 if there is none).' })
+  .transform((value) => Number(value))
   .pipe(
-    z.coerce
+    z
       .number({ message: 'Hymn number must be a number.' })
       .int({ message: 'Hymn number must be a whole number.' })
       .min(0, { message: 'Hymn number cannot be negative.' })
