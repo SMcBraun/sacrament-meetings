@@ -1,14 +1,14 @@
 /* ==========================================================
  * lib/meetings-db.ts — Meeting data from the Neon database
  * ----------------------------------------------------------
- * PLAIN ENGLISH: The functions that ask the database for
- *   sacrament meeting programs.
+ * PLAIN ENGLISH: The functions that read, add, change, and
+ *   delete sacrament meeting programs in the database.
  * LOGIC: Each function sends a SQL query to Neon (Postgres)
  *   and returns the rows in the SacramentMeeting shape.
  * WHY WE NEED IT: Week 02 kept meetings in a list inside the
  *   code, which reset when the server restarted. Now the data
  *   lives in a real database, so it stays saved.
- * LEARNING GAP: Every function is now "async" (it waits for the
+ * LEARNING GAP: Every function is "async" (it waits for the
  *   database), so every file that calls them must use "await".
  *   Same idea as my CSE 340 Postgres models, but with Neon.
  * WHERE THE DATA COMES FROM: The "meetings" table I created
@@ -162,10 +162,10 @@ export async function getMeetingsByDate(
  * PLAIN ENGLISH: "Give me meeting number 3."
  * LOGIC: WHERE id = ${id} finds one row. rows[0] is the first
  *   (and only) match. ?? null returns null if nothing matched.
- * WHY WE NEED IT: GET /api/meetings/[id] and the detail page.
- * LEARNING GAP: Returning null lets the API route send a 404,
- *   just like before. Same name and input as Week 02, so the
- *   route only needs "await" added.
+ * WHY WE NEED IT: GET /api/meetings/[id], the detail page, and
+ *   the edit page (which shows "Meeting not found" on null).
+ * LEARNING GAP: Returning null lets the caller decide what to
+ *   do: the API sends a 404, the pages call notFound().
  * ---------------------------------------------------------- */
 export async function getMeetingById(
   id: number
@@ -190,29 +190,134 @@ export async function getMeetingById(
 }
 
 /* ----------------------------------------------------------
- * Mutation stubs — add, update, delete (Week 04)
- * PLAIN ENGLISH: Placeholders for creating, editing, and
- *   deleting meetings. They don't work yet on purpose.
- * LOGIC: Each one throws an error that says "coming in Week 04."
- * WHY WE NEED IT: The assignment says to keep these names and
- *   inputs now, so the Week 04 forms can plug right in.
- * LEARNING GAP: Omit<SacramentMeeting, 'id'> means "a meeting
- *   without an id" (the database makes the id). Partial<> means
- *   "only some fields," since an edit may change just one thing.
+ * addMeeting — save a NEW meeting (Week 04: live SQL)
+ * PLAIN ENGLISH: "Add this Sunday's program to the database."
+ * LOGIC: INSERT INTO ... VALUES (...) adds one row. RETURNING
+ *   sends the new row back (with the id the database made), so
+ *   we don't need a second query to read it.
+ * WHY WE NEED IT: The createMeeting Server Action calls this
+ *   when the "Create meeting" form is submitted.
+ * LEARNING GAP: Hymns, speakers, and ward business are "jsonb"
+ *   columns (little JSON bundles), so JSON.stringify() turns the
+ *   object into JSON text and ::jsonb tells Postgres to store it
+ *   as JSON. announcements is a text[] (a list of text), so the
+ *   list goes in as-is with ::text[]. Values still go in as
+ *   ${...} placeholders, so this is safe from SQL injection.
  * ---------------------------------------------------------- */
 export async function addMeeting(
   data: Omit<SacramentMeeting, 'id'>
 ): Promise<SacramentMeeting> {
-  throw new Error('addMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    INSERT INTO meetings (
+      date, meeting_type, presiding, conducting, announcements,
+      opening_hymn, opening_prayer, ward_business, stake_business,
+      sacrament_hymn, speakers, closing_hymn, closing_prayer
+    )
+    VALUES (
+      ${data.date}::date,
+      ${data.meetingType},
+      ${data.presiding},
+      ${data.conducting},
+      ${data.announcements ?? []}::text[],
+      ${JSON.stringify(data.openingHymn)}::jsonb,
+      ${data.openingPrayer},
+      ${JSON.stringify(data.wardBusiness)}::jsonb,
+      ${data.stakeBusiness},
+      ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      ${JSON.stringify(data.speakers)}::jsonb,
+      ${JSON.stringify(data.closingHymn)}::jsonb,
+      ${data.closingPrayer}
+    )
+    RETURNING
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type                AS "meetingType",
+      presiding, conducting, announcements,
+      opening_hymn                AS "openingHymn",
+      opening_prayer              AS "openingPrayer",
+      ward_business               AS "wardBusiness",
+      stake_business              AS "stakeBusiness",
+      sacrament_hymn              AS "sacramentHymn",
+      speakers,
+      closing_hymn                AS "closingHymn",
+      closing_prayer              AS "closingPrayer"
+  `;
+  return rows[0] as unknown as SacramentMeeting;
 }
 
+/* ----------------------------------------------------------
+ * updateMeeting — change an EXISTING meeting (Week 04: live SQL)
+ * PLAIN ENGLISH: "Fix the program for meeting number 3."
+ * LOGIC: First read the current meeting. If it doesn't exist,
+ *   return null. Otherwise mix the changes on top of the current
+ *   values ({ ...current, ...updates }) and save every column
+ *   with UPDATE ... WHERE id = ${id} RETURNING ...
+ * WHY WE NEED IT: The updateMeeting Server Action calls this
+ *   when the edit form is submitted.
+ * LEARNING GAP: Partial<SacramentMeeting> means "only some
+ *   fields may be sent." Mixing with the current meeting means
+ *   fields that weren't sent keep their old values instead of
+ *   being wiped out. Returning null (not throwing) lets the
+ *   caller show a friendly "not found" message.
+ * ---------------------------------------------------------- */
 export async function updateMeeting(
   id: number,
   updates: Partial<SacramentMeeting>
 ): Promise<SacramentMeeting | null> {
-  throw new Error('updateMeeting: database implementation coming in Week 04');
+  const current = await getMeetingById(id);
+  if (!current) {
+    return null;
+  }
+
+  const meeting = { ...current, ...updates, id };
+
+  const rows = await sql`
+    UPDATE meetings SET
+      date           = ${meeting.date}::date,
+      meeting_type   = ${meeting.meetingType},
+      presiding      = ${meeting.presiding},
+      conducting     = ${meeting.conducting},
+      announcements  = ${meeting.announcements ?? []}::text[],
+      opening_hymn   = ${JSON.stringify(meeting.openingHymn)}::jsonb,
+      opening_prayer = ${meeting.openingPrayer},
+      ward_business  = ${JSON.stringify(meeting.wardBusiness)}::jsonb,
+      stake_business = ${meeting.stakeBusiness},
+      sacrament_hymn = ${JSON.stringify(meeting.sacramentHymn)}::jsonb,
+      speakers       = ${JSON.stringify(meeting.speakers)}::jsonb,
+      closing_hymn   = ${JSON.stringify(meeting.closingHymn)}::jsonb,
+      closing_prayer = ${meeting.closingPrayer}
+    WHERE id = ${id}
+    RETURNING
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type                AS "meetingType",
+      presiding, conducting, announcements,
+      opening_hymn                AS "openingHymn",
+      opening_prayer              AS "openingPrayer",
+      ward_business               AS "wardBusiness",
+      stake_business              AS "stakeBusiness",
+      sacrament_hymn              AS "sacramentHymn",
+      speakers,
+      closing_hymn                AS "closingHymn",
+      closing_prayer              AS "closingPrayer"
+  `;
+  return (rows[0] as unknown as SacramentMeeting) ?? null;
 }
 
+/* ----------------------------------------------------------
+ * deleteMeeting — remove a meeting (Week 04: live SQL)
+ * PLAIN ENGLISH: "Take meeting number 3 off the calendar."
+ * LOGIC: DELETE FROM ... WHERE id = ${id} RETURNING id. If a row
+ *   came back, it was deleted (true). If not, it didn't exist
+ *   (false).
+ * WHY WE NEED IT: The deleteMeeting Server Action calls this
+ *   when the Delete button on a meeting card is clicked.
+ * LEARNING GAP: Always delete by id with WHERE. A DELETE with no
+ *   WHERE would erase EVERY meeting in the table.
+ * ---------------------------------------------------------- */
 export async function deleteMeeting(id: number): Promise<boolean> {
-  throw new Error('deleteMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    DELETE FROM meetings WHERE id = ${id} RETURNING id
+  `;
+  return rows.length > 0;
 }
